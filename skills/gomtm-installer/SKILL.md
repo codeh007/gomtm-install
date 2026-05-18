@@ -1,21 +1,21 @@
 ---
 name: gomtm-installer
-description: Use when initializing a Linux host for gomtm-adjacent work, preparing a development machine, diagnosing installer prerequisites, or deciding whether a host setup task belongs in gomtm-install instead of gomtm core.
+description: 适用于初始化 gomtm 周边 Linux 主机、准备开发机、诊断安装前置条件，或判断某个主机安装任务应进入 gomtm-install 而不是 gomtm 主仓的场景。
 ---
 
-# gomtm Installer
+# gomtm 安装器
 
-## Core Rules
+## 核心规则
 
-- Prefer `gomtm-install` for host provisioning, development environment setup, Agent tooling, VNC/browser setup, and future base image assembly.
-- Treat the existing `gomtm install` command as gomtm-core compatibility during migration. Do not add new installer responsibilities to `pkg/mtinstall/installers`.
-- Use scripts first. The CLI is a thin dispatcher over scripts.
-- Keep scripts idempotent, readable, and independently runnable.
-- Use `--dry-run` before changing a host when a dry-run mode exists.
-- For remote hosts, verify local command behavior before connecting.
-- Install this skill from the `gomtm-install` repository when possible; the copies in broader skill repos are compatibility mirrors.
+- 主机初始化、开发环境准备、Agent 工具安装、VNC/browser 环境和未来基础镜像组装，优先放在 `gomtm-install`。
+- 现有 `gomtm install` 命令只是 gomtm 主仓迁移期兼容入口。不要继续向 `pkg/mtinstall/installers` 增加新的安装职责。
+- 脚本优先。CLI 只做轻量分发，不承载复杂安装逻辑。
+- 脚本必须可重复执行、易读，并且能够独立运行。
+- 当命令支持 `--dry-run` 时，真实修改主机前必须先 dry-run。
+- 操作远程主机前，先在本地确认命令路由和 dry-run 行为。
+- 尽量从 `gomtm-install` 仓库安装本技能；其他技能仓库中的同名文件只是兼容镜像。
 
-## Commands
+## 命令
 
 ```bash
 bin/gomtm-install doctor
@@ -29,28 +29,28 @@ bin/gomtm-install install vnc --dry-run
 bin/gomtm-install remote bootstrap --dry-run user@host
 ```
 
-## Workflow
+## 工作流
 
-1. Run `bin/gomtm-install doctor --json`.
-2. Choose the smallest install target:
-   - `install base` for runtime host prerequisites.
-   - `install runtime-languages` for Go, Node/Bun, uv, and Python.
-   - `install docker` for Docker and docker-compose.
-   - `install dev` for a development host; it delegates to base, runtime languages, and Docker.
-   - `install agent-tools` for Claude Code, Gemini CLI, OpenClaw, Wrangler, Playwright, and pre-commit.
-   - `install vnc` for KasmVNC desktop dependencies.
-3. Run the command with `--dry-run`.
-4. Run the command without `--dry-run` only after the dry-run output matches the target.
-5. Run `tests/smoke.sh` after changing scripts or CLI routing.
+1. 运行 `bin/gomtm-install doctor --json` 了解当前主机状态。
+2. 选择最小安装目标：
+   - `install base`：runtime 主机基础依赖。
+   - `install runtime-languages`：Go、Node/Bun、uv 和 Python。
+   - `install docker`：Docker 和 docker-compose。
+   - `install dev`：开发机初始化；内部组合调用 base、runtime languages 和 Docker。
+   - `install agent-tools`：Claude Code、Gemini CLI、OpenClaw、Wrangler、Playwright 和 pre-commit。
+   - `install vnc`：KasmVNC desktop 依赖。
+3. 先带 `--dry-run` 执行目标命令。
+4. 只有 dry-run 输出符合预期后，才去掉 `--dry-run` 真实执行。
+5. 修改脚本或 CLI 路由后，运行 `tests/smoke.sh`。
 
-## Boundaries
+## 边界
 
-- Do not copy OpenCLI or CLI-Anything skills into this project by default. Treat them as references for Agent-native CLI design.
-- Do not delete `gomtm install` until gomtm core callers and Dockerfile users are migrated in later phases.
-- Do not route new host setup work into `gomtm/pkg/mtinstall/installers`.
-- Do not run remote bootstrap without a local dry-run and an explicit target check.
+- 不要默认把 OpenCLI 或 CLI-Anything 技能复制进本项目；它们只作为 Agent-native CLI 设计参考。
+- 在 gomtm 主仓调用方和 Dockerfile 使用方完成后续迁移前，不要删除 `gomtm install`。
+- 新的主机安装职责不要再进入 `gomtm/pkg/mtinstall/installers`。
+- 未完成本地 dry-run 和远程目标确认前，不要执行 remote bootstrap。
 
-## Verification
+## 验证
 
 ```bash
 tests/smoke.sh

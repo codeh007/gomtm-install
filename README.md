@@ -1,19 +1,19 @@
 # gomtm-install
 
-`gomtm-install` is the standalone installer and Agent bootstrap project for gomtm-adjacent host setup.
+`gomtm-install` 是 gomtm 周边主机安装与 Agent bootstrap 的独立公开仓库。
 
-The gomtm core repository should stay focused on runtime, server, control-plane, and database behavior. Host provisioning, development machine setup, Agent tooling, VNC/browser setup, and base image assembly belong here.
+gomtm 主仓应继续聚焦 runtime、server、control-plane 和数据库行为。宿主机初始化、开发机初始化、Agent 工具、VNC/browser 环境和基础镜像组装等外围安装职责，统一放在本仓维护。
 
-## Repository Layout
+## 仓库结构
 
 ```text
-bin/       Thin CLI dispatcher for humans and agents.
-scripts/   Idempotent installer and diagnostic scripts.
-skills/    Installable Agent-facing skill entrypoint.
-tests/     Smoke tests for routing, syntax, and dry-run behavior.
+bin/       面向人类和 Agent 的轻量 CLI 分发入口。
+scripts/   可重复执行的安装脚本、诊断脚本和共享 shell helper。
+skills/    可安装的 Agent 技能入口。
+tests/     覆盖命令路由、脚本语法和 dry-run 行为的 smoke 测试。
 ```
 
-## Commands
+## 命令
 
 ```bash
 bin/gomtm-install doctor
@@ -27,48 +27,63 @@ bin/gomtm-install install vnc --dry-run
 bin/gomtm-install remote bootstrap --dry-run user@host
 ```
 
-`install dev` delegates to `install base`, `install runtime-languages`, and `install docker`.
+`install dev` 会组合调用 `install base`、`install runtime-languages` 和 `install docker`，用于开发机初始化。
 
-## Install Skills
+## 安装技能
 
-`npx skills` clones source repositories with git. It does not expose a separate token flag; credentials must be available to git through normal git authentication paths.
+`npx skills` 通过 git 克隆源仓库。它不提供单独的 token 参数；访问凭据需要通过标准 git 认证路径准备好。
 
-List skills from the public repository:
+从公开仓库列出可用技能：
 
 ```bash
 npx skills add https://github.com/codeh007/gomtm-install --list
 ```
 
-Install the canonical installer skill globally:
+全局安装 canonical `gomtm-installer` 技能：
 
 ```bash
 npx skills add https://github.com/codeh007/gomtm-install --skill gomtm-installer --global --yes
 ```
 
-Install from a local checkout while developing:
+开发本仓时，可以从本地 checkout 安装：
 
 ```bash
 npx skills add . --skill gomtm-installer --global --yes
 ```
 
-## Agent Entry
+如果运行环境需要显式 GitHub 凭据，优先让 git 本身可认证：
 
-Use `skills/gomtm-installer/SKILL.md` as the Agent-facing entrypoint.
+```bash
+gh auth login --with-token
+gh auth setup-git
+```
 
-## Migration Boundary
+自动化或只读 Agent 环境可通过环境变量提供 token：
 
-This repository is now the canonical home for new host provisioning work. The existing `gomtm install` command remains in gomtm core for compatibility while callers and Dockerfile/base-image behavior are migrated. Do not add new installer responsibilities to `gomtm/pkg/mtinstall/installers`.
+```bash
+export GH_TOKEN=...
+# or: export GITHUB_TOKEN=...
+npx skills add https://github.com/codeh007/gomtm-install --list
+```
 
-Currently migrated here:
+## Agent 入口
 
-- base OS package list
-- development host package list
-- Go 1.26.2, Node.js 22, Bun, uv 0.9.17, Python 3.12
-- Docker and docker-compose
-- Agent CLI tools: Claude Code, Gemini CLI, OpenClaw, Wrangler, Playwright, pre-commit
-- KasmVNC desktop dependency setup
+`skills/gomtm-installer/SKILL.md` 是本仓面向 Agent 的 canonical 入口。需要初始化 Linux 主机、准备 gomtm 开发机、安装 Agent 工具、准备 VNC/browser 环境，或判断某项安装职责是否应从 gomtm 主仓迁移时，应优先读取该技能。
 
-## Verification
+## 迁移边界
+
+本仓是新的主机安装 canonical 位置。现有 `gomtm install` 命令在迁移期继续保留在 gomtm 主仓中，用于兼容旧调用方和仍待迁移的 Dockerfile/base-image 行为。不要继续向 `gomtm/pkg/mtinstall/installers` 增加新的安装职责。
+
+当前已迁移到本仓的低耦合安装能力：
+
+- 基础 OS package 列表。
+- 开发机 package 列表。
+- Go 1.26.2、Node.js 22、Bun、uv 0.9.17、Python 3.12。
+- Docker 和 docker-compose。
+- Agent CLI 工具：Claude Code、Gemini CLI、OpenClaw、Wrangler、Playwright、pre-commit。
+- KasmVNC desktop 依赖安装。
+
+## 验证
 
 ```bash
 tests/smoke.sh
