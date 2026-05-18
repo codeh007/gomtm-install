@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+usage() {
+  cat <<'USAGE'
+Usage:
+  gomtm-install doctor [--json]
+  gomtm-install install base [--dry-run]
+  gomtm-install install dev [--dry-run]
+  gomtm-install install agent-tools [--dry-run]
+  gomtm-install install vnc [--dry-run]
+  gomtm-install remote bootstrap [--dry-run] user@host
+
+Standalone gomtm host installer and Agent bootstrap entrypoint.
+USAGE
+}
+
+if [ "$#" -eq 0 ]; then
+  usage
+  exit 0
+fi
+
+case "$1" in
+  -h|--help)
+    usage
+    exit 0
+    ;;
+  doctor)
+    shift
+    exec "${ROOT_DIR}/scripts/doctor.sh" "$@"
+    ;;
+  install)
+    shift
+    [ "$#" -gt 0 ] || {
+      usage
+      exit 2
+    }
+    case "$1" in
+      base)
+        shift
+        exec "${ROOT_DIR}/scripts/install-base.sh" "$@"
+        ;;
+      dev)
+        shift
+        exec "${ROOT_DIR}/scripts/install-dev.sh" "$@"
+        ;;
+      agent-tools)
+        shift
+        exec "${ROOT_DIR}/scripts/install-agent-tools.sh" "$@"
+        ;;
+      vnc)
+        shift
+        exec "${ROOT_DIR}/scripts/install-vnc.sh" "$@"
+        ;;
+      *)
+        usage
+        exit 2
+        ;;
+    esac
+    ;;
+  remote)
+    shift
+    [ "${1:-}" = "bootstrap" ] || {
+      usage
+      exit 2
+    }
+    shift
+    exec "${ROOT_DIR}/scripts/remote-bootstrap.sh" "$@"
+    ;;
+  *)
+    usage
+    exit 2
+    ;;
+esac
