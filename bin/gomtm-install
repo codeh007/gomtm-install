@@ -10,6 +10,8 @@ Usage:
   gomtm-install doctor [--json]
   gomtm-install install base [--dry-run]
   gomtm-install install dev [--dry-run]
+  gomtm-install install runtime-languages [--dry-run]
+  gomtm-install install docker [--dry-run]
   gomtm-install install agent-tools [--dry-run]
   gomtm-install install vnc [--dry-run]
   gomtm-install remote bootstrap [--dry-run] user@host
@@ -46,6 +48,14 @@ case "$1" in
       dev)
         shift
         exec "${ROOT_DIR}/scripts/install-dev.sh" "$@"
+        ;;
+      runtime-languages)
+        shift
+        exec "${ROOT_DIR}/scripts/install-runtime-languages.sh" "$@"
+        ;;
+      docker)
+        shift
+        exec "${ROOT_DIR}/scripts/install-docker.sh" "$@"
         ;;
       agent-tools)
         shift

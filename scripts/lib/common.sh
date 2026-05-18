@@ -29,6 +29,14 @@ run_cmd() {
   "$@"
 }
 
+run_shell() {
+  if is_dry_run; then
+    printf '[dry-run] bash -lc %s\n' "$1" >&2
+    return 0
+  fi
+  bash -lc "$1"
+}
+
 have_cmd() {
   command -v "$1" >/dev/null 2>&1
 }
@@ -49,6 +57,23 @@ sudo_cmd() {
   run_cmd sudo "$@"
 }
 
+sudo_shell() {
+  if [ "$(id -u)" = "0" ]; then
+    run_shell "$1"
+    return
+  fi
+  need_cmd sudo
+  if is_dry_run; then
+    printf '[dry-run] sudo bash -lc %s\n' "$1" >&2
+    return 0
+  fi
+  sudo bash -lc "$1"
+}
+
 json_escape() {
   printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
+}
+
+shell_quote() {
+  printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\\\''/g")"
 }

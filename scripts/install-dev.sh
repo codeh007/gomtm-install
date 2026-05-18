@@ -14,7 +14,7 @@ usage() {
   cat <<'USAGE'
 Usage: install-dev.sh [--dry-run]
 
-Installs development-host prerequisites. Phase 1 keeps this conservative and installs only OS packages.
+Installs development-host prerequisites and delegates runtime languages and Docker to migrated scripts.
 USAGE
 }
 
@@ -44,17 +44,47 @@ fi
 dev_packages=(
   build-essential
   make
+  bc
+  cmake
   pkg-config
   libssl-dev
   libpq-dev
+  libxml2
+  libxmlsec1-dev
+  python3-dev
+  ca-certificates
+  patch
+  dbus-x11
+  x11-utils
+  x11-xserver-utils
+  xdg-utils
+  at-spi2-core
+  ncdu
+  postgresql-client
+  libpcap-dev
   ripgrep
 )
 
 apt_install_if_missing "${dev_packages[@]}"
 
+runtime_args=()
+docker_args=()
+if is_dry_run; then
+  runtime_args+=(--dry-run)
+  docker_args+=(--dry-run)
+fi
+
+"${ROOT_DIR}/scripts/install-runtime-languages.sh" "${runtime_args[@]}"
+"${ROOT_DIR}/scripts/install-docker.sh" "${docker_args[@]}"
+
 if ! is_dry_run; then
   verify_command make
   verify_command rg
+  verify_command go
+  verify_command node
+  verify_command bun
+  verify_command uv
+  verify_command docker
 fi
 
 log "dev install complete"

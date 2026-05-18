@@ -38,12 +38,24 @@ base_packages=(
   sudo
   curl
   wget
-  ca-certificates
   tar
-  git
   jq
+  ca-certificates
+  git
+  man-db
+  less
+  bc
   unzip
   rsync
+  procps
+  psmisc
+  lsof
+  socat
+  gnupg2
+  openssl
+  lsb-release
+  locales
+  tzdata
   openssh-client
 )
 
